@@ -133,3 +133,162 @@ Converter types:
 | `path`   | `string` kabi, lekin slashlarni ham qabul qiladi           |
 | `uuid`   | UUID satrlarini qabul qiladi                               |
 
+## Noyob URL manzillari / Qayta yo'naltirish harakati
+
+Quyidagi ikkita qoida keyingi slashdan foydalanishda farqlanadi.
+
+```python
+@app.route('/projects/')
+def projects():
+    return 'Loyihalar sahifasi'
+
+@app.route('/about')
+def about():
+    return 'Ma\'lumot sahifasi'
+```
+
+`projects` so'nggi nuqtasi uchun kanonik URLda slash bor. Bu fayl tizimidagi papkaga o'xshaydi. Agar siz URL manziliga slashsiz (`/projects`) kirsangiz, Flask sizni keyingi slash (`/projects/`) bilan kanonik URL manziliga yo‘naltiradi.
+
+`about` so'nggi nuqtasi uchun kanonik URLda slash yo'q. Bu faylning yo'l nomiga o'xshaydi. URL manziliga slash (`/about/`) bilan kirish 404 “Not Found” xatosini keltirib chiqaradi. Bu URL manzillarini ushbu manbalar uchun noyob saqlashga yordam beradi, bu esa qidiruv tizimlariga bir sahifani ikki marta indekslashni oldini olishga yordam beradi.
+
+## URL qurish
+
+Muayyan funktsiyaning URL manzilini yaratish uchun url\_for() funksiyasidan foydalaning. U birinchi argument sifatida funktsiya nomini va har bir URL qoidasining o'zgaruvchan qismiga mos keladigan kalit so'z argumentlarining istalgan sonini qabul qiladi. Noma'lum o'zgaruvchan qismlar URL manziliga so'rov parametrlari sifatida qo'shiladi.
+
+Nima uchun URL manzillarini shablonlaringizga hard-coding[^1] o‘rniga url\_for() funksiyasidan foydalanib yaratmoqchisiz?
+
+1. `url_for()` ko'pincha URL-manzillarni hard-coding'dan ko'ra tavsifliroq.
+2. hard-coded URL-manzillarni qo'lda o'zgartirishni eslab qolish o'rniga, URL-manzillaringizni bir marta o'zgartirishingiz mumkin.
+3. URL yaratish maxsus belgilardan qochishni shaffof tarzda boshqaradi.
+4. Yaratilgan URL har doim mutlaq bo'lib, brauzerlarda nisbiy URLlarning kutilmagan xatti-harakatlaridan qochadi.
+5. Agar ilovangiz URL ildizidan tashqarida joylashgan bo'lsa, masalan, / o'rniga /myapplication-da, url\_for() buni siz uchun to'g'ri bajaradi.
+
+Misol uchun, bu  yerda url\_for() ni sinab ko'rish uchun test\_request\_context() usulidan foydalanamiz. test\_request\_context() Flaskga o'zini Python qobig'idan foydalanganda ham xuddi so'rovni bajarayotgandek tutishni aytadi.
+
+```python
+from flask import url_for
+
+@app.route('/')
+def index():
+    return 'index'
+
+@app.route('/login')
+def login():
+    return 'login'
+
+@app.route('/user/<username>')
+def profile(username):
+    return f'{username}\'s profile'
+
+with app.test_request_context():
+    print(url_for('index'))
+    print(url_for('login'))
+    print(url_for('login', next='/'))
+    print(url_for('profile', username='John Doe'))
+```
+
+```
+/
+/login
+/login?next=/
+/user/John%20Doe
+```
+
+## HTTP Metodlar
+
+Veb-ilovalar URL manzillariga kirishda turli HTTP metodlardan foydalanadi. Flask bilan ishlashda HTTP metodlari bilan tanishishingiz kerak. Odatda `route` faqat GET so'rovlariga javob beradi. Turli HTTP metodlarini boshqarish uchun `route()` dekoratorining `methods` argumentidan foydalanishingiz mumkin.
+
+```python
+from flask import request
+
+@app.route('/login', methods=['GET', 'POST'])
+def login():
+    if request.method == 'POST':
+        return do_the_login()
+    else:
+        return show_the_login_form()
+```
+
+Yuqoridagi misol `route`ning barcha usullarini bitta funktsiya doirasida saqlaydi, bu har bir qism ba'zi umumiy ma'lumotlardan foydalansa foydali bo'lishi mumkin.
+
+Bundan tashqari, turli metodlar uchun `view`larni turli funktsiyalarga ajratishingiz mumkin. Flaskda har bir umumiy HTTP metodi uchun `route` dekoratori o'rnida ishlatish uchun `get()`, `post()` kabi dekoratorlar bor.&#x20;
+
+```python
+@app.get('/login')
+def login_get():
+    return show_the_login_form()
+
+@app.post('/login')
+def login_post():
+    return do_the_login()
+```
+
+Agar `GET` mavjud bo'lsa, Flask avtomatik ravishda `HEAD` metodini qo'llab-quvvatlaydi va [HTTP RFC](https://www.ietf.org/rfc/rfc2068.txt) ga muvofiq `HEAD` so'rovlarini bajaradi. Xuddi shunday, OPTIONS siz uchun avtomatik ravishda amalga oshiriladi.
+
+## Statik fayllar
+
+Dinamik veb-ilovalar uchun statik fayllar ham kerak bo'ladi. Bu odatda CSS va JavaScript fayllari qayerdan kelishini ko'rsatadi. Ideal holda sizning veb-serveringiz ular uchun avtomatik sozlangan, ammo Flask ishlab chiqish jarayonida buni ham o'zgartira oladi. Paketingizda yoki modulingiz yonida `static` nomli jild yarating va u ilovada /static da ko'rinadi.&#x20;
+
+Statik fayllar uchun URL manzillarini yaratish uchun maxsus `"static"` nomidan foydalaning:
+
+```python
+url_for('static', filename='style.css')
+```
+
+Fayl fayl tizimida `static/style.css` sifatida saqlanishi kerak.
+
+## Shablonlar(HTML sahifa) ko'rsatish
+
+Python ichida HTML yaratish qiziq emas va aslida juda mashaqqatli, chunki dasturni xavfsiz saqlash uchun "HTML escaping" ni o'zingiz qilishingiz kerak. Shu sababli Flask siz uchun Jinja2 shablon mexanizmini avtomatik ravishda sozlaydi.
+
+Shablonlar har qanday turdagi matn faylini yaratish uchun ishlatilishi mumkin. Veb-ilovalar uchun siz birinchi navbatda HTML sahifalarini yaratasiz, lekin siz "markdown", elektron pochta xabarlari uchun oddiy matn va boshqa narsalarni ham yaratishingiz mumkin.
+
+HTML,CSS,JavaScript va boshqa web API'larni o'rganish uchun [MDN Web Docs](https://developer.mozilla.org/) dan foydalaning.
+
+Shablonlarni yaratish uchun `render_tamplate()` funktsiyasidan foydalanishingiz mumkin. Siz qilishingiz kerak bo'lgan narsa shablon nomini va shablon mexanizmiga kalit so'z argumentlari sifatida o'tkazmoqchi bo'lgan o'zgaruvchilarni taqdim etishdir. Shablonni qanday yaratishga oddiy misol:
+
+```python
+from flask import render_template
+
+@app.route('/hello/')
+@app.route('/hello/<name>')
+def hello(name=None):
+    return render_template('hello.html', name=name)
+```
+
+Flask `templates` papkasida shablonlarni qidiradi. Shunday qilib, agar ilovangiz modul bo'lsa, bu jild o'sha modul yonida, agar u paket bo'lsa, u paketingiz ichida bo'ladi:
+
+**1-holat**: modul:
+
+```
+/application.py
+/templates
+    /hello.html
+```
+
+**2-holat**: paket:
+
+```
+/application
+    /__init__.py
+    /templates
+        /hello.html
+```
+
+Shablonlar uchun siz Jinja2 shablonlarining to'liq quvvatidan foydalanishingiz mumkin. Qo'shimcha ma'lumot olish uchun rasmiy [Jinja2 Templates Documentation](https://jinja.palletsprojects.com/templates/)ga o'ting.
+
+Namuna Shablon:
+
+```django
+<!doctype html>
+<title>Hello from Flask</title>
+{% raw %}
+{% if name %}
+  <h1>Hello {{ name }}!</h1>
+{% else %}
+  <h1>Hello, World!</h1>
+{% endif %}
+{% endraw %}
+```
+
+[^1]: dasturda (ma'lumotlar yoki parametrlarni) dasturni o'zgartirmasdan o'zgartirib bo'lmaydigan tarzda tuzatish.
