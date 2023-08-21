@@ -291,4 +291,31 @@ Namuna Shablon:
 {% endraw %}
 ```
 
+Shablonlar ichida siz `config`, `request`, `session` va `g` ob'yektlari hamda `url_for()` va `get_flashed_messages()` funksiyalariga kirishingiz mumkin.
+
+## Request ob'yekti
+
+Bu yerda ba'zi eng keng tarqalgan operatsiyalarning keng ko'rinishi mavjud. Avvalo uni flask modulidan import qilishingiz kerak:
+
+```python
+from flask import request
+```
+
+Joriy so'rov metodi `method` atributi yordamida mavjud. Forma ma'lumotlariga kirish uchun (POST yoki PUT so'rovida uzatiladigan ma'lumotlar) siz `form` atributidan foydalanishingiz mumkin. Yuqorida aytib o'tilgan ikkita atributning to'liq misoli:
+
+```python
+@app.route('/login', methods=['POST', 'GET'])
+def login():
+    error = None
+    if request.method == 'POST':
+        if valid_login(request.form['username'],
+                       request.form['password']):
+            return log_the_user_in(request.form['username'])
+        else:
+            error = 'Invalid username/password'
+    # the code below is executed if the request method
+    # was GET or the credentials were invalid
+    return render_template('login.html', error=error)
+```
+
 [^1]: dasturda (ma'lumotlar yoki parametrlarni) dasturni o'zgartirmasdan o'zgartirib bo'lmaydigan tarzda tuzatish.
