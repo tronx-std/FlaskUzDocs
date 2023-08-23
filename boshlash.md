@@ -318,4 +318,44 @@ def login():
     return render_template('login.html', error=error)
 ```
 
+Form atributida kalit mavjud bo'lmasa nima bo'ladi? Bunday holda, maxsus KeyError paydo bo'ladi. Siz uni standart KeyError kabi ushlab qolishingiz mumkin, lekin buni qilmasangiz, uning o'rniga HTTP 400 Bad Request sahifasi ko'rsatiladi. Shunday qilib, ko'p holatlarda siz bu muammoni hal qilishingiz shart emas.
+
+URL manzilida (?key=value) taqdim etilgan parametrlarga kirish uchun args atributidan foydalanishingiz mumkin:
+
+```python
+searchword = request.args.get('key', '')
+```
+
+Biz URL parametrlariga GET yordamida yoki KeyError ni ushlash orqali kirishni tavsiya qilamiz, chunki foydalanuvchilar URL manzilini oʻzgartirishi va ularga 400 Bad Requet sahifasini taqdim etishi foydalanuvchilar uchun qulay emas.
+
+## Fayl yuklash
+
+Siz flask bilan yuklangan fayllarni oson ushlab qolishingiz mumkin. Shunchaki HTML sahifangizdagi formada `enctype="multipart/form-data"`ni qo'shganingizga ishonch hosil qiling. Aks holda brauzer sizning fayllaringizni umuman uzatmaydi.
+
+Yuklangan fayllar fayl tizimidagi vaqtinchalik joyda saqlanadi. Siz ushbu fayllarga `request` ob'ektidagi `files` atributi bilan kirishingiz mumkin. Har bir yuklangan fayl ushbu dict'da saqlanadi.  U xuddi standart Python fayl ob'ekti kabi ishlaydi, lekin u shuningdek, ushbu faylni serverning fayl tizimida saqlash imkonini beruvchi save() funktsiyasiga ega. Bu qanday ishlashini ko'rsatadigan oddiy misol:
+
+```python
+from flask import request
+
+@app.route('/upload', methods=['GET', 'POST'])
+def upload_file():
+    if request.method == 'POST':
+        f = request.files['the_file']
+        f.save('/var/www/uploads/uploaded_file.txt')
+    ...
+```
+
+Agar fayl ilovangizga yuklanishidan oldin mijozda qanday nomlanganini bilmoqchi bo'lsangiz, `filename` atributiga kirishingiz mumkin. Ammo shuni yodda tutingki, bu qiymat soxtalashtirilishi mumkin, shuning uchun hech qachon bu qiymatga ishonmang. Agar siz faylni serverda saqlash uchun mijozning fayl nomidan foydalanmoqchi boʻlsangiz, Werkzeug sizga taqdim etgan security\_filename() funksiyasidan foydalaning:
+
+```python
+from werkzeug.utils import secure_filename
+
+@app.route('/upload', methods=['GET', 'POST'])
+def upload_file():
+    if request.method == 'POST':
+        file = request.files['the_file']
+        file.save(f"/var/www/uploads/{secure_filename(file.filename)}")
+    ...
+```
+
 [^1]: dasturda (ma'lumotlar yoki parametrlarni) dasturni o'zgartirmasdan o'zgartirib bo'lmaydigan tarzda tuzatish.
