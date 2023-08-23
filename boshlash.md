@@ -358,4 +358,155 @@ def upload_file():
     ...
 ```
 
+## Cookie-fayllar
+
+Cookie-fayllarga kirish uchun siz `cookies` atributidan foydalanishingiz mumkin. Cookie-fayllarni o'rnatish uchun response obyektlarining set\_cookie funktsiyasidan foydalanishingiz mumkin. Request ob'ektlarining `cookies` atributi mijoz uzatadigan barcha cookie-fayllarga ega lug'atdir. Agar siz seanslardan foydalanmoqchi bo'lsangiz, to'g'ridan-to'g'ri cookie-fayllardan foydalanmang, aksincha siz uchun cookie-fayllar ustiga xavfsizlik qo'shadigan Flask-dagi Sessions-dan foydalaning.
+
+Cookie fayllarni o'qish:
+
+```python
+@app.route('/')
+def index():
+    username = request.cookies.get('username')
+    # use cookies.get(key) instead of cookies[key] to not get a
+    # KeyError if the cookie is missing
+```
+
+Cookie fayllarni o'rnatish:
+
+```python
+from flask import make_response
+
+@app.route('/')
+def index():
+    resp = make_response(render_template(...))
+    resp.set_cookie('username', 'the username')
+    return resp
+```
+
+Cookie-fayllar response ob'ektlarida o'rnatilganligini unutmang. Odatda view funktsiyalaridan satrlarni qaytarganingiz uchun Flask ularni siz uchun javob ob'ektlariga aylantiradi. Agar buni aniq qilishni istasangiz make\_response() funksiyasidan foydalanishingiz va keyin uni o'zgartirishingiz mumkin.
+
+## Qayta yo'naltirish va xatolar
+
+Foydalanuvchini boshqa nuqtaga yo'naltirish uchun `redirect()` funksiyasidan foydalaning; Xato kodi bilan so'rovni erta bekor qilish uchun `abort()` funktsiyasidan foydalaning:
+
+```python
+from flask import abort, redirect, url_for
+
+@app.route('/')
+def index():
+    return redirect(url_for('login'))
+
+@app.route('/login')
+def login():
+    abort(401)
+    bu_hech_qachon_amalga_oshmaydi()
+```
+
+Bu juda ma'nosiz misol, chunki foydalanuvchi indeksdan o'zi kira olmaydigan sahifaga yo'naltiriladi (401 kirish taqiqlangan degan ma'noni anglatadi), lekin bu qanday ishlashini ko'rsatadi.
+
+Odatiy bo'lib, har bir xato kodi uchun qora va oq xato sahifasi ko'rsatiladi. Agar siz xato sahifasini o'zgartirmoqchi bo'lsangiz, errorhandler() dekoratoridan foydalanishingiz mumkin:
+
+```python
+from flask import render_template
+
+@app.errorhandler(404)
+def page_not_found(error):
+    return render_template('page_not_found.html'), 404
+```
+
+render\_template() chaqiruvidan keyin 404 ga e'tibor bering. Bu Flaskga ushbu sahifaning status kodi 404 bo'lishi kerakligini aytadi, bu topilmadi degan ma'noni anglatadi. Odatiy bo'lib, 200 (hammasi yaxshi o'tdi) qaytariladi.
+
+## Response-lar haqida
+
+View funktsiyasidan qaytariladigan qiymat avtomatik ravishda siz uchun response ob'ektiga aylanadi. Qaytadigan qiymat satr bo'lsa, u body, 200 OK status kodi va text/html mimetype sifatida satr bilan javob ob'ektiga aylantiriladi. Qaytadigan qiymat dict yoki ro'yxat bo'lsa, `jsonify()` javob ishlab chiqarish uchun chaqiriladi. Qaytadigan qiymatlarni response ob'ektlariga aylantirish uchun Flask qo'llaydigan mantiq quyidagicha:
+
+1. Agar to'g'ri turdagi response ob'ekti qaytarilsa, u to'g'ridan-to'g'ri view funktsiyadan qaytariladi.
+2. Agar bu satr bo'lsa, response ob'ekti ushbu ma'lumotlar va standart parametrlar bilan yaratiladi.
+3. Agar bu satrlar yoki baytlarni qaytaruvchi iterator yoki generator bo'lsa, u oqimli javob sifatida ko'rib chiqiladi.
+4. Agar bu dict yoki ro'yxat bo'lsa, jsonify() yordamida response ob'ekti yaratiladi.
+5. Agar tuple qaytarilsa, tuple-dagi elementlar qo'shimcha ma'lumot berishi mumkin. Bunday tuple-lar (response, status), (response, title) yoki (response, status, title) shaklida bo'lishi kerak. Status qiymati status kodini bekor qiladi va header-lar qo'shimcha header qiymatlari ro'yxati yoki lug'ati bo'lishi mumkin.&#x20;
+6. Agar ulardan hech biri ishlamasa, Flask qaytariladigan qiymatni WSGI ilovasi deb hisoblaydi va uni javob obyektiga aylantiradi.
+
+Natijadagi response ob'ektini view ichida qo'lga olishni istasangiz `make_response()` funktsiyasidan foydalanishingiz mumkin.
+
+Tasavvur qiling sizda quyidagicha view bor:
+
+```python
+from flask import render_template
+
+@app.errorhandler(404)
+def not_found(error):
+    return render_template('error.html'), 404
+```
+
+Qaytish ifodasini `make_response()` bilan o'rashingiz va uni o'zgartirish uchun response ob'ektini olishingiz kerak, keyin uni qaytaring:
+
+```python
+from flask import make_response
+
+@app.errorhandler(404)
+def not_found(error):
+    resp = make_response(render_template('error.html'), 404)
+    resp.headers['X-Something'] = 'A value'
+    return resp
+```
+
+## JSON bilan API
+
+API yozishda asosan javob formati JSON hisoblanadi. Flask yordamida bunday API yozishni boshlash juda oson. Agar siz view-dan dict yoki ro'yxatni qaytarsangiz, u JSON javobiga aylantiriladi.
+
+```python
+@app.route("/me")
+def me_api():
+    user = get_current_user()
+    return {
+        "username": user.username,
+        "theme": user.theme,
+        "image": url_for("user_image", filename=user.image),
+    }
+
+@app.route("/users")
+def users_api():
+    users = get_all_users()
+    return [user.to_json() for user in users]
+```
+
+Bu `jsonify()` funksiyasiga maʼlumotlarni uzatish uchun yorliq boʻlib, u har qanday qoʻllab-quvvatlanadigan JSON maʼlumotlar turidan foydalana oladi. Buning ma'nosi shundaki, foydalanuvchi cookie faylingiz mazmunini ko'rib chiqishi mumkin, lekin kodlash uchun ishlatiladigan maxfiy kalitni bilmasa, uni o'zgartira olmaydi.
+
+Seanslardan foydalanish uchun siz maxfiy kalitni o'rnatishingiz kerak. Seanslar qanday ishlaydi:
+
+```python
+from flask import session
+
+# Set the secret key to some random bytes. Keep this really secret!
+app.secret_key = b'_5#y2L"F4Q8z\n\xec]/'
+
+@app.route('/')
+def index():
+    if 'username' in session:
+        return f'Logged in as {session["username"]}'
+    return 'You are not logged in'
+
+@app.route('/login', methods=['GET', 'POST'])
+def login():
+    if request.method == 'POST':
+        session['username'] = request.form['username']
+        return redirect(url_for('index'))
+    return '''
+        <form method="post">
+            <p><input type=text name=username>
+            <p><input type=submit value=Login>
+        </form>
+    '''
+
+@app.route('/logout')
+def logout():
+    # remove the username from the session if it's there
+    session.pop('username', None)
+    return redirect(url_for('index'))
+```
+
+###
+
 [^1]: dasturda (ma'lumotlar yoki parametrlarni) dasturni o'zgartirmasdan o'zgartirib bo'lmaydigan tarzda tuzatish.
