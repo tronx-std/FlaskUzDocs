@@ -507,6 +507,41 @@ def logout():
     return redirect(url_for('index'))
 ```
 
-###
+> ### Kuchli maxfiy kalit generatsiya qilish
+>
+> Maxfiy kalit imkon qadar tasodifiy bo'lishi kerak. Sizning operatsion tizimingizda kriptografik tasodifiy generator asosida juda tasodifiy ma'lumotlarni yaratish usullari mavjud. Flask.secret\_key (yoki SECRET\_KEY) uchun tezda qiymat yaratish uchun quyidagi buyruqdan foydalaning:
+>
+> ```
+> $ python -c 'import secrets; print(secrets.token_hex())'
+> '192b9bdd22ab9ed4d12e236c78afcb9a393ec15f71bbf5dc987d54727823bcbf'
+> ```
+
+Cookie-ga asoslangan seanslar haqida eslatma: Flask siz sessiya ob'ektiga qo'ygan qiymatlarni oladi va ularni cookie fayliga seriyalashtiradi. Agar ba'zi qiymatlar so'rovlar davomida saqlanib qolmasligini aniqlasangiz, cookie-fayllar haqiqatan ham yoqilgan va aniq xato xabari olmagan bo'lsangiz, veb-brauzerlar tomonidan qo'llab-quvvatlanadigan o'lcham bilan solishtirganda sahifangizdagi javoblardagi cookie hajmini tekshiring.
+
+Standart mijozga asoslangan seanslardan tashqari, agar siz server tomonidagi seanslarni boshqarishni istasangiz, buni qo'llab-quvvatlaydigan bir nechta Flask extension-lari mavjud.
+
+## Message Flashing
+
+Yaxshi ilovalar va foydalanuvchi interfeyslari fikr-mulohazalarga bog'liq. Agar foydalanuvchi yetarlicha fikr-mulohaza ololmasa, ular dasturdan nafratlanishi mumkin. Flask Flashing System bilan foydalanuvchiga fikr bildirishning juda oddiy usulini taqdim etadi. Flashing system asosan so'rov oxirida xabarni yozib olish va unga keyingi (va faqat keyingi) so'rovda kirish imkonini beradi. Bu odatda xabarni ochish uchun tartib shabloni bilan birlashtiriladi.
+
+Message Flashing uchun `flash()` funktsiyasidan foydalaning, xabarlarni ushlab turish uchun shablonlarda mavjud bo'lgan `get_flashed_messages()` dan foydalanishingiz mumkin.
+
+## Logging
+
+Ba'zan siz to'g'ri bo'lishi kerak bo'lgan ma'lumotlar bilan shug'ullanadigan vaziyatga tushib qolishingiz mumkin, lekin ma'lumot aslida unday emas. Misol uchun, sizda serverga HTTP so'rovini yuboradigan ba'zi mijoz kodlari bo'lishi mumkin, ammo u noto'g'ri tuzilganligi aniq. Buning sababi foydalanuvchining ma'lumotlarni buzishi yoki mijoz kodi ishlamay qolishi mumkin. Ko'pincha bunday vaziyatda `400 Bad Request` bilan javob berish mumkin, lekin ba'zida bu ishlamaydi va kod ishlashni davom ettirishi kerak.
+
+Siz hali ham biror narsa sodir bo'lganligini qayd qilishni xohlashingiz mumkin. Bu yerda logger-lar yordamga keladi. Flask 0.3 dan boshlab logger siz ishlatishingiz uchun oldindan sozlanib keladi.
+
+Mana logging uchun misollar:
+
+```python
+app.logger.debug('A value for debugging')
+app.logger.warning('A warning occurred (%d apples)', 42)
+app.logger.error('An error occurred')
+```
+
+## WSGI Middleware-ga ulanish
+
+Flask ilovangizga WSGI o'rta dasturini qo'shish uchun ilovaning wsgi\_app atributini o'rab oling. Masalan, Nginx orqasida ishlash uchun Werkzeug's ProxyFix o'rta dasturini qo'llash uchun:
 
 [^1]: dasturda (ma'lumotlar yoki parametrlarni) dasturni o'zgartirmasdan o'zgartirib bo'lmaydigan tarzda tuzatish.
