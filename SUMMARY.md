@@ -7,3 +7,4 @@
 ## darslik
 
 * [Darslik haqida](darslik/darslik-haqida.md)
+* [Loyiha tuzilishi](darslik/loyiha-tuzilishi.md)
