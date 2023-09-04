@@ -62,3 +62,24 @@ def create_app(test_config=None):
    * test\_config zavodga ham o'tkazilishi mumkin va standart konfiguratsiya o'rniga ishlatiladi. Shunday qilib, siz qo'llanmada keyinroq yozadigan testlar siz sozlagan har qanday rivojlanish qiymatlaridan mustaqil ravishda sozlanishi mumkin.
 4. os.makedirs() app.instance\_path mavjudligini ta'minlaydi. Flask papkasini avtomatik ravishda yaratmaydi, lekin uni yaratish kerak, chunki sizning loyihangiz u erda SQLite ma'lumotlar bazasi faylini yaratadi.
 5. @app.route() oddiy routeni yaratadi, shuning uchun qo'llanmaning qolgan qismiga kirishdan oldin dastur ishlayotganini ko'rishingiz mumkin. U URL /hello va javobni qaytaruvchi funksiya o'rtasida bog'lanish hosil qiladi, 'Hello, World!' Ushbu holatda.
+
+## Ilovani ishga tushirish
+
+Endi siz flask ilovasini `flask` buyrug'i yordamida ishga tushirishingiz mumkin. Ilovani ishga tushirish uchun terminalga quyidagi buyruqni yozing:
+
+```bash
+$ flask --app flaskr run --debug
+```
+
+Bu yerda --app argumenti bilan ilova qayerda ekanligini ko'rsatib o'tasiz va --debug orqali ilovnagizni debug mode-da ishga tushirasiz. Bu buyruqni yozganingizdan so'ng terminalda quyidagicha yozuv chiqadi:
+
+```
+* Serving Flask app "flaskr"
+* Debug mode: on
+* Running on http://127.0.0.1:5000/ (Press CTRL+C to quit)
+* Restarting with stat
+* Debugger is active!
+* Debugger PIN: nnn-nnn-nnn
+```
+
+Bu sizning ilovangiz 127.0.0.1 hostida 5000-portda debug mode bilan ishlayotganini ko'rsatadi. Ilovangizni browserda ko'rish uchun http://127.0.0.1:5000/ ga boring.
